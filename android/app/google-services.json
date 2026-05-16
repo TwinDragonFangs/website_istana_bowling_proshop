@@ -1,0 +1,46 @@
+{
+  "project_info": {
+    "project_number": "398988127025",
+    "project_id": "website-istana-bowling-proshop",
+    "storage_bucket": "website-istana-bowling-proshop.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:398988127025:android:3880f9218e0cfc61275e10",
+        "android_client_info": {
+          "package_name": "com.example.website_istana_bowling_proshop"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "398988127025-dfkk1auucb63sbv7bgol8rkllgiqc23v.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyB5vLVcMWoe3pnrXNkMlvEmVfA3nNMuPUU"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "398988127025-dfkk1auucb63sbv7bgol8rkllgiqc23v.apps.googleusercontent.com",
+              "client_type": 3
+            },
+            {
+              "client_id": "398988127025-37tf9jd0g7usevfkm1l0ag4565iaej75.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "com.example.websiteIstanaBowlingProshop"
+              }
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
