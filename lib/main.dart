@@ -13,7 +13,22 @@ import 'pages/auth/login_page.dart';
 void main() async {
 
   WidgetsFlutterBinding.ensureInitialized();
+  theme: ThemeData(
+  useMaterial3: true,
 
+  colorScheme: ColorScheme.fromSeed(
+    seedColor: const Color(0xFFE53935),
+  ),
+
+  scaffoldBackgroundColor:
+      const Color(0xFFF5F7FA),
+
+  inputDecorationTheme:
+      const InputDecorationTheme(
+    filled: true,
+    fillColor: Colors.white,
+  ),
+);
   await Firebase.initializeApp(
     options:
         DefaultFirebaseOptions.currentPlatform,

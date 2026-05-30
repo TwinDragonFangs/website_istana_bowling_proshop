@@ -4,7 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 
 import 'package:image_picker/image_picker.dart';
-import 'package:flutter_image_compress/flutter_image_compress.dart';
+import 'package:image/image.dart' as img;
 
 class AddProductPage extends StatefulWidget {
   const AddProductPage({super.key});
@@ -16,7 +16,6 @@ class AddProductPage extends StatefulWidget {
 
 class _AddProductPageState
     extends State<AddProductPage> {
-
   final _nameC = TextEditingController();
   final _priceC = TextEditingController();
   final _descC = TextEditingController();
@@ -32,7 +31,6 @@ class _AddProductPageState
   List<String> variants = [];
 
   Future<void> _pickImage() async {
-
     final xFile =
         await _picker.pickImage(
       source: ImageSource.gallery,
@@ -40,103 +38,190 @@ class _AddProductPageState
 
     if (xFile == null) return;
 
-    final compressed =
-        await FlutterImageCompress
-            .compressWithFile(
-      xFile.path,
-      quality: 60,
-      minWidth: 500,
-      minHeight: 500,
-    );
+    try {
+      final bytes =
+          await xFile.readAsBytes();
 
-    if (compressed == null) return;
+      final image =
+          img.decodeImage(bytes);
 
-    setState(() {
-      _imageBase64 =
-          base64Encode(compressed);
-    });
+      if (image == null) {
+        throw Exception(
+            "Format gambar tidak didukung");
+      }
+
+      final resized =
+          img.copyResize(
+        image,
+        width: 800,
+      );
+
+      final compressed =
+          img.encodeJpg(
+        resized,
+        quality: 70,
+      );
+
+      setState(() {
+        _imageBase64 =
+            base64Encode(compressed);
+      });
+
+      final originalSize =
+          bytes.length / 1024;
+
+      final compressedSize =
+          compressed.length / 1024;
+
+      debugPrint(
+        "Original: ${originalSize.toStringAsFixed(0)} KB",
+      );
+
+      debugPrint(
+        "Compressed: ${compressedSize.toStringAsFixed(0)} KB",
+      );
+
+      if (mounted) {
+        ScaffoldMessenger.of(context)
+            .showSnackBar(
+          SnackBar(
+            content: Text(
+              "Gambar berhasil dikompres (${compressedSize.toStringAsFixed(0)} KB)",
+            ),
+          ),
+        );
+      }
+    } catch (e) {
+      debugPrint(
+        "Compress Error: $e",
+      );
+
+      if (mounted) {
+        ScaffoldMessenger.of(context)
+            .showSnackBar(
+          SnackBar(
+            content:
+                Text("Gagal memproses gambar: $e"),
+          ),
+        );
+      }
+    }
   }
 
   Future<void> _saveProduct() async {
-
-    if (_imageBase64 == null) return;
+    if (_imageBase64 == null) {
+      ScaffoldMessenger.of(context)
+          .showSnackBar(
+        const SnackBar(
+          content:
+              Text("Silakan pilih gambar"),
+        ),
+      );
+      return;
+    }
 
     setState(() {
       _loading = true;
     });
 
-    await _db.collection('products').add({
-      'name': _nameC.text.trim(),
+    try {
+      await _db.collection('products').add({
+        'name': _nameC.text.trim(),
+        'price':
+            int.tryParse(_priceC.text) ?? 0,
+        'description':
+            _descC.text.trim(),
+        'imageBase64':
+            _imageBase64,
+        'variants': variants,
+        'createdAt':
+            FieldValue.serverTimestamp(),
+      });
 
-      'price':
-          int.tryParse(_priceC.text) ?? 0,
+      if (mounted) {
+        ScaffoldMessenger.of(context)
+            .showSnackBar(
+          const SnackBar(
+            content: Text(
+              'Produk berhasil ditambahkan',
+            ),
+          ),
+        );
 
-      'description':
-          _descC.text.trim(),
-
-      'imageBase64': _imageBase64,
-
-      'variants': variants,
-
-      'createdAt':
-          FieldValue.serverTimestamp(),
-    });
-
-    if (mounted) {
-
-      ScaffoldMessenger.of(context)
-          .showSnackBar(
-        const SnackBar(
-          content:
-              Text('Produk berhasil ditambahkan'),
-        ),
-      );
-
-      Navigator.pop(context);
+        Navigator.pop(context);
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context)
+            .showSnackBar(
+          SnackBar(
+            content:
+                Text('Gagal menyimpan: $e'),
+          ),
+        );
+      }
     }
+
+    setState(() {
+      _loading = false;
+    });
   }
 
   @override
   Widget build(BuildContext context) {
-
     return Scaffold(
-
       appBar: AppBar(
-        title: const Text(
-          "Tambah Produk",
-        ),
+        title:
+            const Text("Tambah Produk"),
       ),
 
       body: ListView(
-        padding: const EdgeInsets.all(16),
+        padding:
+            const EdgeInsets.all(16),
 
         children: [
-
           GestureDetector(
             onTap: _pickImage,
 
             child: Container(
-              height: 200,
+              height: 220,
 
               decoration: BoxDecoration(
-                color: Colors.grey.shade300,
+                color:
+                    Colors.grey.shade300,
                 borderRadius:
-                    BorderRadius.circular(12),
+                    BorderRadius.circular(
+                        12),
               ),
 
-              child: _imageBase64 == null
-                  ? const Icon(
-                      Icons.add_a_photo,
-                      size: 50,
+              child: _imageBase64 ==
+                      null
+                  ? const Column(
+                      mainAxisAlignment:
+                          MainAxisAlignment
+                              .center,
+                      children: [
+                        Icon(
+                          Icons.add_a_photo,
+                          size: 50,
+                        ),
+                        SizedBox(
+                            height: 8),
+                        Text(
+                            "Klik untuk memilih gambar"),
+                      ],
                     )
                   : ClipRRect(
                       borderRadius:
-                          BorderRadius.circular(12),
+                          BorderRadius
+                              .circular(
+                                  12),
 
                       child: Image.memory(
                         base64Decode(
                             _imageBase64!),
-                        fit: BoxFit.cover,
+                        fit:
+                            BoxFit.cover,
                       ),
                     ),
             ),
@@ -148,7 +233,10 @@ class _AddProductPageState
             controller: _nameC,
             decoration:
                 const InputDecoration(
-              labelText: 'Nama Produk',
+              labelText:
+                  'Nama Produk',
+              border:
+                  OutlineInputBorder(),
             ),
           ),
 
@@ -162,6 +250,8 @@ class _AddProductPageState
             decoration:
                 const InputDecoration(
               labelText: 'Harga',
+              border:
+                  OutlineInputBorder(),
             ),
           ),
 
@@ -169,12 +259,14 @@ class _AddProductPageState
 
           TextField(
             controller: _descC,
-
-            maxLines: 3,
+            maxLines: 4,
 
             decoration:
                 const InputDecoration(
-              labelText: 'Deskripsi',
+              labelText:
+                  'Deskripsi',
+              border:
+                  OutlineInputBorder(),
             ),
           ),
 
@@ -182,28 +274,32 @@ class _AddProductPageState
 
           Row(
             children: [
-
               Expanded(
                 child: TextField(
-                  controller: _variantC,
+                  controller:
+                      _variantC,
 
                   decoration:
                       const InputDecoration(
                     labelText:
                         'Variant (12 lbs)',
+                    border:
+                        OutlineInputBorder(),
                   ),
                 ),
               ),
 
+              const SizedBox(
+                  width: 8),
+
               IconButton(
                 onPressed: () {
-
-                  if (_variantC.text.isEmpty) {
+                  if (_variantC
+                      .text.isEmpty) {
                     return;
                   }
 
                   setState(() {
-
                     variants.add(
                         _variantC.text);
 
@@ -211,13 +307,18 @@ class _AddProductPageState
                   });
                 },
 
-                icon: const Icon(Icons.add),
+                icon: const Icon(
+                  Icons.add_circle,
+                ),
               ),
             ],
           ),
 
+          const SizedBox(height: 10),
+
           Wrap(
             spacing: 8,
+            runSpacing: 8,
 
             children: variants
                 .map(
@@ -226,7 +327,8 @@ class _AddProductPageState
 
                     onDeleted: () {
                       setState(() {
-                        variants.remove(v);
+                        variants
+                            .remove(v);
                       });
                     },
                   ),
@@ -236,15 +338,20 @@ class _AddProductPageState
 
           const SizedBox(height: 30),
 
-          ElevatedButton(
-            onPressed:
-                _loading ? null : _saveProduct,
+          SizedBox(
+            height: 55,
 
-            child: _loading
-                ? const CircularProgressIndicator()
-                : const Text(
-                    "Simpan Produk",
-                  ),
+            child: ElevatedButton(
+              onPressed: _loading
+                  ? null
+                  : _saveProduct,
+
+              child: _loading
+                  ? const CircularProgressIndicator()
+                  : const Text(
+                      "Simpan Produk",
+                    ),
+            ),
           ),
         ],
       ),
