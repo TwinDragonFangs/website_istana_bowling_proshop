@@ -1,171 +1,370 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-
 import '../../models/product.dart';
 import '../../providers/cart_provider.dart';
-
-import '../../sections/banner_section.dart';
-import '../../sections/footer.dart';
-import '../../sections/navbar.dart';
-import '../../sections/product_section.dart';
-
 import '../../services/firebase_service.dart';
-import '../../services/whatsapp_service.dart';
+import '../../sections/navbar.dart';
+import '../../sections/banner_section.dart';
+import '../../sections/product_section.dart';
+import '../../sections/footer.dart';
+import './user_orders_page.dart';
+import '../cart_page.dart';
+import '../user_profile_page.dart';
 
-class HomePage extends StatelessWidget {
-  HomePage({super.key});
+class HomePage extends StatefulWidget {
+  const HomePage({super.key});
 
+  @override
+  State<HomePage> createState() =>
+      _HomePageState();
+}
+
+class _HomePageState
+    extends State<HomePage> {
   final FirebaseService _service =
       FirebaseService();
 
+  String selectedCategory = "All";
+  String selectedWeight = "All";
+  String searchQuery = "";
+
+  List<Product> filterProducts(
+    List<Product> products,
+  ) {
+    return products.where((p) {
+      final name =
+          p.name.toLowerCase();
+
+      final query =
+          searchQuery.toLowerCase();
+
+      final matchSearch =
+          name.contains(query);
+
+      final matchCategory =
+          selectedCategory == "All" ||
+              p.category ==
+                  selectedCategory;
+
+      final matchWeight =
+          selectedWeight == "All" ||
+              p.variants.any(
+                (variant) =>
+                    variant
+                        .toLowerCase()
+                        .contains(
+                          selectedWeight
+                              .toLowerCase(),
+                        ),
+              );
+
+      return matchSearch &&
+          matchCategory &&
+          matchWeight;
+    }).toList();
+  }
+
   @override
   Widget build(BuildContext context) {
-
-    final cart =
-        Provider.of<CartProvider>(context);
+    Provider.of<CartProvider>(
+      context,
+    );
 
     return Scaffold(
+      backgroundColor:
+          const Color(0xfff5f5f5),
 
-      appBar: AppBar(
+      body:
+          FutureBuilder<List<Product>>(
+        future:
+            _service.getProducts(),
 
-        title: const Text(
-          "Istana Bowling Proshop",
-        ),
-
-        actions: [
-
-          Padding(
-            padding:
-                const EdgeInsets.only(right: 20),
-
-            child: Stack(
-
-              alignment: Alignment.center,
-
-              children: [
-
-                IconButton(
-
-                  onPressed: () {
-
-                    if (cart.items.isEmpty) {
-
-                      ScaffoldMessenger.of(context)
-                          .showSnackBar(
-                        const SnackBar(
-                          content:
-                              Text("Keranjang kosong"),
-                        ),
-                      );
-
-                      return;
-                    }
-
-                    WhatsAppService.checkout(
-                      cart.items,
-                      cart.totalPrice,
-                    );
-                  },
-
-                  icon: const Icon(
-                    Icons.shopping_cart,
-                  ),
-                ),
-
-                Positioned(
-
-                  right: 0,
-                  top: 0,
-
-                  child: Container(
-
-                    padding:
-                        const EdgeInsets.all(5),
-
-                    decoration:
-                        const BoxDecoration(
-                      color: Colors.red,
-                      shape: BoxShape.circle,
-                    ),
-
-                    child: Text(
-                      cart.items.length.toString(),
-
-                      style: const TextStyle(
-                        color: Colors.white,
-                        fontSize: 12,
-                      ),
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ],
-      ),
-
-      body: FutureBuilder<List<Product>>(
-
-        future: _service.getProducts(),
-
-        builder: (context, snapshot) {
-
-          if (snapshot.connectionState ==
-              ConnectionState.waiting) {
-
+        builder:
+            (context, snapshot) {
+          if (snapshot
+                  .connectionState ==
+              ConnectionState
+                  .waiting) {
             return const Center(
-              child: CircularProgressIndicator(),
+              child:
+                  CircularProgressIndicator(),
             );
           }
 
           if (snapshot.hasError) {
-
             return Center(
               child: Text(
-                'Error: ${snapshot.error}',
+                "Error: ${snapshot.error}",
               ),
             );
           }
 
           final products =
-              snapshot.data ?? [];
+              filterProducts(
+            snapshot.data ?? [],
+          );
 
-          if (products.isEmpty) {
+          return Column(
+            children: [
+              Navbar(
+                isAdmin: false,
 
-            return const Center(
-              child: Text(
-                'Belum ada produk',
+                onCategorySelected:
+                    (c) {
+                  setState(() {
+                    selectedCategory =
+                        c;
+                  });
+                },
+
+                onProfileUser: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (_) =>
+                          const UserProfilePage(),
+                    ),
+                  );
+                },
+
+                onOrdersUser: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (_) =>
+                          const UserOrdersPage(),
+                    ),
+                  );
+                },
+
+                onCart: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (_) =>
+                          const CartPage(),
+                    ),
+                  );
+                },
               ),
-            );
-          }
 
-          return SingleChildScrollView(
+              Expanded(
+                child:
+                    SingleChildScrollView(
+                  child: Column(
+                    children: [
+                      const BannerSection(),
 
-            child: Column(
+                      const SizedBox(
+                        height: 10,
+                      ),
 
-              children: [
+                      Padding(
+                        padding:
+                            const EdgeInsets
+                                .symmetric(
+                          horizontal: 10,
+                        ),
 
-                const Navbar(),
+                        child: Row(
+                          children: [
+                            Expanded(
+                              flex: 3,
 
-                const BannerSection(),
+                              child:
+                                  TextField(
+                                onChanged:
+                                    (
+                                      value,
+                                    ) {
+                                  setState(
+                                    () {
+                                      searchQuery =
+                                          value;
+                                    },
+                                  );
+                                },
 
-                ProductSection(
-                  title:
-                      "Hottest Bowling Balls",
+                                decoration:
+                                    InputDecoration(
+                                  prefixIcon:
+                                      const Icon(
+                                    Icons
+                                        .search,
+                                  ),
 
-                  products: products,
+                                  hintText:
+                                      "Cari produk...",
+
+                                  border:
+                                      OutlineInputBorder(
+                                    borderRadius:
+                                        BorderRadius.circular(
+                                      10,
+                                    ),
+                                  ),
+
+                                  filled:
+                                      true,
+
+                                  fillColor:
+                                      Colors.white,
+
+                                  isDense:
+                                      true,
+                                ),
+                              ),
+                            ),
+
+                            const SizedBox(
+                              width: 10,
+                            ),
+
+                            Expanded(
+                              flex: 2,
+
+                              child:
+                                  DropdownButtonFormField<
+                                      String>(
+                                value:
+                                    selectedCategory,
+
+                                items: [
+                                  "All",
+                                  "Ball",
+                                  "Shoes",
+                                  "Accessories",
+                                  "Bag",
+                                ]
+                                    .map(
+                                      (
+                                        e,
+                                      ) =>
+                                          DropdownMenuItem(
+                                        value:
+                                            e,
+                                        child:
+                                            Text(
+                                          e,
+                                        ),
+                                      ),
+                                    )
+                                    .toList(),
+
+                                onChanged:
+                                    (
+                                      value,
+                                    ) {
+                                  setState(
+                                    () {
+                                      selectedCategory =
+                                          value!;
+                                    },
+                                  );
+                                },
+
+                                decoration:
+                                    const InputDecoration(
+                                  border:
+                                      OutlineInputBorder(),
+                                  filled:
+                                      true,
+                                  fillColor:
+                                      Colors.white,
+                                  isDense:
+                                      true,
+                                ),
+                              ),
+                            ),
+
+                            const SizedBox(
+                              width: 10,
+                            ),
+
+                            Expanded(
+                              flex: 2,
+
+                              child:
+                                  DropdownButtonFormField<
+                                      String>(
+                                value:
+                                    selectedWeight,
+
+                                items: [
+                                  "All",
+                                  "10",
+                                  "12",
+                                  "14",
+                                  "16",
+                                ]
+                                    .map(
+                                      (
+                                        e,
+                                      ) =>
+                                          DropdownMenuItem(
+                                        value:
+                                            e,
+                                        child:
+                                            Text(
+                                          e ==
+                                                  "All"
+                                              ? e
+                                              : "$e lbs",
+                                        ),
+                                      ),
+                                    )
+                                    .toList(),
+
+                                onChanged:
+                                    (
+                                      value,
+                                    ) {
+                                  setState(
+                                    () {
+                                      selectedWeight =
+                                          value!;
+                                    },
+                                  );
+                                },
+
+                                decoration:
+                                    const InputDecoration(
+                                  border:
+                                      OutlineInputBorder(),
+                                  filled:
+                                      true,
+                                  fillColor:
+                                      Colors.white,
+                                  isDense:
+                                      true,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+
+                      const SizedBox(
+                        height: 15,
+                      ),
+
+                      ProductSection(
+                        title:
+                            selectedCategory ==
+                                    "All"
+                                ? "All Products"
+                                : selectedCategory,
+
+                        products:
+                            products,
+                      ),
+
+                      const Footer(),
+                    ],
+                  ),
                 ),
-
-                ProductSection(
-                  title:
-                      "Recommended Products",
-
-                  products: products,
-                ),
-
-                const Footer(),
-              ],
-            ),
+              ),
+            ],
           );
         },
       ),

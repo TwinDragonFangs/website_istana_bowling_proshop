@@ -33,8 +33,27 @@ class _LoginPageState extends State<LoginPage> {
         email: _emailC.text.trim(),
         password: _passC.text.trim(),
       );
+      
+      await cred.user!.reload();
 
-      final uid = cred.user!.uid;
+        final user =
+            FirebaseAuth.instance.currentUser!;
+
+        if (!user.emailVerified) {
+          await _auth.signOut();
+
+          throw FirebaseAuthException(
+            code: 'email-not-verified',
+            message:
+                'Email belum diverifikasi. Silakan cek inbox email.',
+          );
+        }
+
+      final uid = user.uid;
+
+      await _db.collection('users').doc(uid).update({
+        'email': user.email,
+      });
 
       final doc =
           await _db.collection('users').doc(uid).get();
@@ -127,13 +146,20 @@ class _LoginPageState extends State<LoginPage> {
         await docRef.set({
           'name': user.displayName ?? '',
           'email': user.email ?? '',
+          'phone': '',
+          'address': '',
+          'profileImage': '',
           'role': 'user',
-          'createdAt':
-              FieldValue.serverTimestamp(),
+          'createdAt': FieldValue.serverTimestamp(),
         });
 
         print("User berhasil dibuat");
       }
+
+      await docRef.set({
+        'name': user.displayName ?? '',
+        'email': user.email ?? '',
+      }, SetOptions(merge: true));
 
       final updatedDoc =
           await docRef.get();
@@ -248,6 +274,39 @@ class _LoginPageState extends State<LoginPage> {
                   border: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(12),
                   ),
+                ),
+              ),
+              TextButton(
+                onPressed: () async {
+
+                  if (_emailC.text.trim().isEmpty) {
+                    ScaffoldMessenger.of(context)
+                        .showSnackBar(
+                      const SnackBar(
+                        content: Text(
+                          "Masukkan email terlebih dahulu",
+                        ),
+                      ),
+                    );
+                    return;
+                  }
+
+                  await FirebaseAuth.instance
+                      .sendPasswordResetEmail(
+                    email: _emailC.text.trim(),
+                  );
+
+                  ScaffoldMessenger.of(context)
+                      .showSnackBar(
+                    const SnackBar(
+                      content: Text(
+                        "Link reset password telah dikirim",
+                      ),
+                    ),
+                  );
+                },
+                child: const Text(
+                  "Lupa Password?",
                 ),
               ),
 

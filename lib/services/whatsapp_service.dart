@@ -10,18 +10,21 @@ class WhatsAppService {
     String message =
         "Halo Istana Bowling Proshop!\n\n";
 
-    message += "Saya ingin memesan:\n\n";
+    message +=
+        "Saya ingin memesan produk berikut:\n\n";
 
     for (var item in items) {
       message +=
-          "- ${item.product.name} "
-          "(${item.selectedVariant}) "
-          "x${item.quantity}\n";
+          "• ${item.product.name}\n"
+          "  Variant : ${item.selectedVariant}\n"
+          "  Qty : ${item.quantity}\n"
+          "  Harga : Rp ${item.product.price}\n\n";
     }
 
     message +=
-        "\nTotal: Rp $total"
-        "\n\nMohon konfirmasi ya 🙏";
+        "====================\n"
+        "TOTAL : Rp ${total.toStringAsFixed(0)}\n\n"
+        "Mohon konfirmasi pesanan saya.\nTerima kasih.";
 
     final encoded =
         Uri.encodeComponent(message);

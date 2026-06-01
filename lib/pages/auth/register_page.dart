@@ -69,7 +69,7 @@ class _RegisterPageState extends State<RegisterPage> {
             mainAxisSize: MainAxisSize.min,
             children: [
               Image.asset(
-                'assets/images/logo.png',
+                'assets/images/logo-ibp.png',
                 height: 160,
               ),
 

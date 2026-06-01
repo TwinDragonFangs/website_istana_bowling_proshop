@@ -2,7 +2,6 @@ import 'dart:convert';
 
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
-
 import 'package:image_picker/image_picker.dart';
 import 'package:image/image.dart' as img;
 
@@ -28,6 +27,15 @@ class _AddProductPageState
 
   bool _loading = false;
 
+  String selectedCategory = "Ball";
+
+  final List<String> categories = [
+    "Ball",
+    "Shoes",
+    "Bag",
+    "Accessories",
+  ];
+
   List<String> variants = [];
 
   Future<void> _pickImage() async {
@@ -47,13 +55,14 @@ class _AddProductPageState
 
       if (image == null) {
         throw Exception(
-            "Format gambar tidak didukung");
+          "Format gambar tidak didukung",
+        );
       }
 
       final resized =
           img.copyResize(
         image,
-        width: 800,
+        width: 1200,
       );
 
       final compressed =
@@ -67,19 +76,8 @@ class _AddProductPageState
             base64Encode(compressed);
       });
 
-      final originalSize =
-          bytes.length / 1024;
-
       final compressedSize =
           compressed.length / 1024;
-
-      debugPrint(
-        "Original: ${originalSize.toStringAsFixed(0)} KB",
-      );
-
-      debugPrint(
-        "Compressed: ${compressedSize.toStringAsFixed(0)} KB",
-      );
 
       if (mounted) {
         ScaffoldMessenger.of(context)
@@ -92,19 +90,13 @@ class _AddProductPageState
         );
       }
     } catch (e) {
-      debugPrint(
-        "Compress Error: $e",
+      ScaffoldMessenger.of(context)
+          .showSnackBar(
+        SnackBar(
+          content:
+              Text("Error: $e"),
+        ),
       );
-
-      if (mounted) {
-        ScaffoldMessenger.of(context)
-            .showSnackBar(
-          SnackBar(
-            content:
-                Text("Gagal memproses gambar: $e"),
-          ),
-        );
-      }
     }
   }
 
@@ -114,7 +106,7 @@ class _AddProductPageState
           .showSnackBar(
         const SnackBar(
           content:
-              Text("Silakan pilih gambar"),
+              Text("Pilih gambar terlebih dahulu"),
         ),
       );
       return;
@@ -125,15 +117,30 @@ class _AddProductPageState
     });
 
     try {
-      await _db.collection('products').add({
-        'name': _nameC.text.trim(),
+      await _db.collection(
+        'products',
+      ).add({
+        'name':
+            _nameC.text.trim(),
+
         'price':
-            int.tryParse(_priceC.text) ?? 0,
+            int.tryParse(
+                  _priceC.text,
+                ) ??
+                0,
+
         'description':
             _descC.text.trim(),
+
         'imageBase64':
             _imageBase64,
-        'variants': variants,
+
+        'category':
+            selectedCategory,
+
+        'variants':
+            variants,
+
         'createdAt':
             FieldValue.serverTimestamp(),
       });
@@ -143,7 +150,7 @@ class _AddProductPageState
             .showSnackBar(
           const SnackBar(
             content: Text(
-              'Produk berhasil ditambahkan',
+              "Produk berhasil ditambahkan",
             ),
           ),
         );
@@ -151,15 +158,13 @@ class _AddProductPageState
         Navigator.pop(context);
       }
     } catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(context)
-            .showSnackBar(
-          SnackBar(
-            content:
-                Text('Gagal menyimpan: $e'),
-          ),
-        );
-      }
+      ScaffoldMessenger.of(context)
+          .showSnackBar(
+        SnackBar(
+          content:
+              Text("Gagal: $e"),
+        ),
+      );
     }
 
     setState(() {
@@ -167,193 +172,322 @@ class _AddProductPageState
     });
   }
 
+  InputDecoration inputStyle(
+    String label,
+  ) {
+    return InputDecoration(
+      labelText: label,
+
+      filled: true,
+      fillColor: Colors.white,
+
+      border:
+          OutlineInputBorder(
+        borderRadius:
+            BorderRadius.circular(12),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor:
+          const Color(0xfff5f5f5),
+
       appBar: AppBar(
-        title:
-            const Text("Tambah Produk"),
+        backgroundColor:
+            Colors.black,
+
+        title: const Text(
+          "Tambah Produk",
+          style: TextStyle(
+            color: Color.fromARGB(255, 255, 255, 255),
+            fontWeight:
+                FontWeight.bold,
+          ),
+        ),
+
+        iconTheme:
+            const IconThemeData(
+          color: Color.fromARGB(255, 255, 255, 255),
+        ),
       ),
 
-      body: ListView(
-        padding:
-            const EdgeInsets.all(16),
+      body: Center(
+        child: Container(
+          width: 900,
+          padding:
+              const EdgeInsets.all(20),
 
-        children: [
-          GestureDetector(
-            onTap: _pickImage,
+          child: Card(
+            elevation: 5,
 
-            child: Container(
-              height: 220,
-
-              decoration: BoxDecoration(
-                color:
-                    Colors.grey.shade300,
-                borderRadius:
-                    BorderRadius.circular(
-                        12),
+            shape:
+                RoundedRectangleBorder(
+              borderRadius:
+                  BorderRadius.circular(
+                20,
               ),
+            ),
 
-              child: _imageBase64 ==
-                      null
-                  ? const Column(
-                      mainAxisAlignment:
-                          MainAxisAlignment
-                              .center,
-                      children: [
-                        Icon(
-                          Icons.add_a_photo,
-                          size: 50,
+            child: Padding(
+              padding:
+                  const EdgeInsets.all(20),
+
+              child: ListView(
+                shrinkWrap: true,
+                children: [
+                  GestureDetector(
+                    onTap: _pickImage,
+                    child: Container(
+                      height: 400,
+                      width: double.infinity,
+
+                      decoration: BoxDecoration(
+                        color: Colors.grey.shade100,
+                        borderRadius: BorderRadius.circular(15),
+                        border: Border.all(
+                          color: Colors.grey.shade300,
                         ),
-                        SizedBox(
-                            height: 8),
-                        Text(
-                            "Klik untuk memilih gambar"),
-                      ],
-                    )
-                  : ClipRRect(
-                      borderRadius:
-                          BorderRadius
-                              .circular(
-                                  12),
-
-                      child: Image.memory(
-                        base64Decode(
-                            _imageBase64!),
-                        fit:
-                            BoxFit.cover,
                       ),
+
+                      child: _imageBase64 == null
+                          ? const Column(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                Icon(
+                                  Icons.add_a_photo,
+                                  size: 70,
+                                ),
+                                SizedBox(height: 10),
+                                Text(
+                                  "Klik untuk memilih gambar",
+                                  style: TextStyle(
+                                    fontSize: 16,
+                                  ),
+                                ),
+                              ],
+                            )
+                          : ClipRRect(
+                              borderRadius: BorderRadius.circular(15),
+                              child: InteractiveViewer(
+                                minScale: 0.5,
+                                maxScale: 5,
+                                child: Image.memory(
+                                  base64Decode(_imageBase64!),
+                                  width: double.infinity,
+                                  height: double.infinity,
+                                  fit: BoxFit.contain,
+                                ),
+                              ),
+                            ),
                     ),
-            ),
-          ),
-
-          const SizedBox(height: 20),
-
-          TextField(
-            controller: _nameC,
-            decoration:
-                const InputDecoration(
-              labelText:
-                  'Nama Produk',
-              border:
-                  OutlineInputBorder(),
-            ),
-          ),
-
-          const SizedBox(height: 12),
-
-          TextField(
-            controller: _priceC,
-            keyboardType:
-                TextInputType.number,
-
-            decoration:
-                const InputDecoration(
-              labelText: 'Harga',
-              border:
-                  OutlineInputBorder(),
-            ),
-          ),
-
-          const SizedBox(height: 12),
-
-          TextField(
-            controller: _descC,
-            maxLines: 4,
-
-            decoration:
-                const InputDecoration(
-              labelText:
-                  'Deskripsi',
-              border:
-                  OutlineInputBorder(),
-            ),
-          ),
-
-          const SizedBox(height: 20),
-
-          Row(
-            children: [
-              Expanded(
-                child: TextField(
-                  controller:
-                      _variantC,
-
-                  decoration:
-                      const InputDecoration(
-                    labelText:
-                        'Variant (12 lbs)',
-                    border:
-                        OutlineInputBorder(),
                   ),
-                ),
-              ),
 
-              const SizedBox(
-                  width: 8),
+                  const SizedBox(
+                      height: 20),
 
-              IconButton(
-                onPressed: () {
-                  if (_variantC
-                      .text.isEmpty) {
-                    return;
-                  }
+                  TextField(
+                    controller:
+                        _nameC,
+                    decoration:
+                        inputStyle(
+                      "Nama Produk",
+                    ),
+                  ),
 
-                  setState(() {
-                    variants.add(
-                        _variantC.text);
+                  const SizedBox(
+                      height: 15),
 
-                    _variantC.clear();
-                  });
-                },
+                  TextField(
+                    controller:
+                        _priceC,
+                    keyboardType:
+                        TextInputType
+                            .number,
+                    decoration:
+                        inputStyle(
+                      "Harga",
+                    ),
+                  ),
 
-                icon: const Icon(
-                  Icons.add_circle,
-                ),
-              ),
-            ],
-          ),
+                  const SizedBox(
+                      height: 15),
 
-          const SizedBox(height: 10),
+                  TextField(
+                    controller:
+                        _descC,
+                    maxLines: 4,
+                    decoration:
+                        inputStyle(
+                      "Deskripsi",
+                    ),
+                  ),
 
-          Wrap(
-            spacing: 8,
-            runSpacing: 8,
+                  const SizedBox(
+                      height: 15),
 
-            children: variants
-                .map(
-                  (v) => Chip(
-                    label: Text(v),
+                  DropdownButtonFormField<
+                      String>(
+                    value:
+                        selectedCategory,
 
-                    onDeleted: () {
+                    decoration:
+                        inputStyle(
+                      "Kategori",
+                    ),
+
+                    items: categories
+                        .map(
+                          (e) =>
+                              DropdownMenuItem(
+                            value: e,
+                            child:
+                                Text(e),
+                          ),
+                        )
+                        .toList(),
+
+                    onChanged:
+                        (value) {
                       setState(() {
-                        variants
-                            .remove(v);
+                        selectedCategory =
+                            value!;
                       });
                     },
                   ),
-                )
-                .toList(),
-          ),
 
-          const SizedBox(height: 30),
+                  const SizedBox(
+                      height: 20),
 
-          SizedBox(
-            height: 55,
+                  Row(
+                    children: [
+                      Expanded(
+                        child: TextField(
+                          controller:
+                              _variantC,
 
-            child: ElevatedButton(
-              onPressed: _loading
-                  ? null
-                  : _saveProduct,
+                          decoration:
+                              inputStyle(
+                            "Variant (12 lbs)",
+                          ),
+                        ),
+                      ),
 
-              child: _loading
-                  ? const CircularProgressIndicator()
-                  : const Text(
-                      "Simpan Produk",
+                      const SizedBox(
+                          width: 10),
+
+                      ElevatedButton(
+                        style:
+                            ElevatedButton.styleFrom(
+                          backgroundColor:
+                              const Color(
+                            0xffD4AF37,
+                          ),
+                        ),
+
+                        onPressed: () {
+                          if (_variantC
+                              .text
+                              .isEmpty) {
+                            return;
+                          }
+
+                          setState(() {
+                            variants.add(
+                              _variantC.text,
+                            );
+
+                            _variantC
+                                .clear();
+                          });
+                        },
+
+                        child:
+                            const Icon(
+                          Icons.add,
+                          color: Colors
+                              .black,
+                        ),
+                      ),
+                    ],
+                  ),
+
+                  const SizedBox(
+                      height: 15),
+
+                  Wrap(
+                    spacing: 8,
+                    runSpacing: 8,
+
+                    children:
+                        variants.map(
+                      (v) {
+                        return Chip(
+                          backgroundColor:
+                              const Color(
+                            0xffD4AF37,
+                          ),
+
+                          label:
+                              Text(v),
+
+                          onDeleted:
+                              () {
+                            setState(
+                              () {
+                                variants.remove(
+                                  v,
+                                );
+                              },
+                            );
+                          },
+                        );
+                      },
+                    ).toList(),
+                  ),
+
+                  const SizedBox(
+                      height: 30),
+
+                  SizedBox(
+                    height: 55,
+
+                    child:
+                        ElevatedButton(
+                      style:
+                          ElevatedButton.styleFrom(
+                        backgroundColor:
+                            const Color(
+                          0xffD4AF37,
+                        ),
+                      ),
+
+                      onPressed:
+                          _loading
+                              ? null
+                              : _saveProduct,
+
+                      child: _loading
+                          ? const CircularProgressIndicator()
+                          : const Text(
+                              "SIMPAN PRODUK",
+                              style:
+                                  TextStyle(
+                                color: Colors
+                                    .black,
+                                fontWeight:
+                                    FontWeight.bold,
+                              ),
+                            ),
                     ),
+                  ),
+                ],
+              ),
             ),
           ),
-        ],
+        ),
       ),
     );
   }
