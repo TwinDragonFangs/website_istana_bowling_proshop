@@ -10,7 +10,7 @@ class Footer extends StatelessWidget {
   // =========================
 
   void _openPhone() async {
-    final uri = Uri.parse("tel:08973021789");
+    final uri = Uri.parse("tel:+62 821-7204-1712");
     if (await canLaunchUrl(uri)) {
       await launchUrl(uri);
     }
@@ -82,7 +82,7 @@ class Footer extends StatelessWidget {
                     Icon(Icons.phone, color: Colors.orange),
                     SizedBox(width: 8),
                     Text(
-                      "08973021789",
+                      "+62 821-7204-1712",
                       style: TextStyle(color: Colors.white),
                     ),
                   ],

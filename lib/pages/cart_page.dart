@@ -290,7 +290,7 @@ class CartPage extends StatelessWidget {
                               final encoded =
                                   Uri.encodeComponent(message);
 
-                              const adminPhone = "628973021789";
+                              const adminPhone = "6282172041712";
 
                               final url =
                                   "https://wa.me/$adminPhone?text=$encoded";

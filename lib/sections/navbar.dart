@@ -33,10 +33,18 @@ class Navbar extends StatelessWidget {
   });
 
   @override
-  Widget build(BuildContext context) {
-    final cart = Provider.of<CartProvider>(context);
-    final user = FirebaseAuth.instance.currentUser;
+    Widget build(BuildContext context) {
+      final width = MediaQuery.of(context).size.width;
 
+      if (width < 768) {
+        return _buildMobileNavbar(context);
+      }
+        return _buildDesktopNavbar(context);
+    }
+
+    Widget _buildDesktopNavbar(BuildContext context) {
+      final cart = Provider.of<CartProvider>(context);
+      final user = FirebaseAuth.instance.currentUser;
     return Container(
       height: 70,
       padding: const EdgeInsets.symmetric(horizontal: 25),
@@ -233,6 +241,199 @@ class Navbar extends StatelessWidget {
                 );
               },
             ),
+        ],
+      ),
+    );
+  }
+  Widget _buildMobileNavbar(BuildContext context) {
+    final cart = Provider.of<CartProvider>(context);
+
+    return Container(
+      height: 70,
+      padding: const EdgeInsets.symmetric(horizontal: 15),
+      color: Colors.black,
+      child: Row(
+        children: [
+          Image.asset(
+            "assets/images/logo-ibp.png",
+            width: 35,
+            height: 35,
+          ),
+
+          const SizedBox(width: 10),
+
+          const Expanded(
+            child: Text(
+              "Istana Bowling Proshop",
+              overflow: TextOverflow.ellipsis,
+              style: TextStyle(
+                color: Colors.white,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+          ),
+
+          // CART
+          Stack(
+            children: [
+              IconButton(
+                icon: const Icon(
+                  Icons.shopping_cart,
+                  color: Colors.white,
+                ),
+                onPressed: onCart,
+              ),
+
+              if (cart.items.isNotEmpty)
+                Positioned(
+                  right: 5,
+                  top: 5,
+                  child: Container(
+                    padding: const EdgeInsets.all(4),
+                    decoration: const BoxDecoration(
+                      color: Colors.red,
+                      shape: BoxShape.circle,
+                    ),
+                    child: Text(
+                      cart.items.length.toString(),
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 10,
+                      ),
+                    ),
+                  ),
+                ),
+            ],
+          ),
+
+          PopupMenuButton<String>(
+            icon: const Icon(
+              Icons.menu,
+              color: Colors.white,
+            ),
+            onSelected: (value) {
+              if (isAdmin) {
+                switch (value) {
+                  case "All":
+                  case "Ball":
+                  case "Shoes":
+                  case "Bag":
+                  case "Accessories":
+                    onCategorySelected(value);
+                    break;
+
+                  case "add":
+                    onAdd?.call();
+                    break;
+
+                  case "manage":
+                    onManage?.call();
+                    break;
+
+                  case "ordersAdmin":
+                    onOrdersAdmin?.call();
+                    break;
+
+                  case "profileAdmin":
+                    onProfileAdmin?.call();
+                    break;
+                }
+              } else {
+                switch (value) {
+                  case "All":
+                  case "Ball":
+                  case "Shoes":
+                  case "Bag":
+                  case "Accessories":
+                    onCategorySelected(value);
+                    break;
+
+                  case "orders":
+                    onOrdersUser?.call();
+                    break;
+
+                  case "profile":
+                    onProfileUser?.call();
+                    break;
+                }
+              }
+            },
+            itemBuilder: (context) {
+              if (isAdmin) {
+                return [
+                  const PopupMenuItem(
+                    value: "All",
+                    child: Text("All Products"),
+                  ),
+                  const PopupMenuItem(
+                    value: "Ball",
+                    child: Text("Balls"),
+                  ),
+                  const PopupMenuItem(
+                    value: "Shoes",
+                    child: Text("Shoes"),
+                  ),
+                  const PopupMenuItem(
+                    value: "Bag",
+                    child: Text("Bags"),
+                  ),
+                  const PopupMenuItem(
+                    value: "Accessories",
+                    child: Text("Accessories"),
+                  ),
+                  const PopupMenuDivider(),
+                  const PopupMenuItem(
+                    value: "add",
+                    child: Text("Tambah Produk"),
+                  ),
+                  const PopupMenuItem(
+                    value: "manage",
+                    child: Text("Kelola Produk"),
+                  ),
+                  const PopupMenuItem(
+                    value: "ordersAdmin",
+                    child: Text("Kelola Pesanan"),
+                  ),
+                  const PopupMenuItem(
+                    value: "profileAdmin",
+                    child: Text("Profil Admin"),
+                  ),
+                ];
+              }
+
+              return [
+                const PopupMenuItem(
+                  value: "All",
+                  child: Text("All Products"),
+                ),
+                const PopupMenuItem(
+                  value: "Ball",
+                  child: Text("Balls"),
+                ),
+                const PopupMenuItem(
+                  value: "Shoes",
+                  child: Text("Shoes"),
+                ),
+                const PopupMenuItem(
+                  value: "Bag",
+                  child: Text("Bags"),
+                ),
+                const PopupMenuItem(
+                  value: "Accessories",
+                  child: Text("Accessories"),
+                ),
+                const PopupMenuDivider(),
+                const PopupMenuItem(
+                  value: "orders",
+                  child: Text("Pesanan Saya"),
+                ),
+                const PopupMenuItem(
+                  value: "profile",
+                  child: Text("Profil"),
+                ),
+              ];
+            },
+          )
         ],
       ),
     );

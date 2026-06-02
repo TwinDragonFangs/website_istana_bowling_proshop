@@ -30,7 +30,7 @@ class WhatsAppService {
         Uri.encodeComponent(message);
 
     final url =
-        "https://wa.me/628973021789?text=$encoded";
+        "https://wa.me/6282172041712?text=$encoded";
 
     html.window.open(url, "_blank");
   }
