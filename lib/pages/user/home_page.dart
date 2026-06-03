@@ -10,9 +10,15 @@ import '../../sections/footer.dart';
 import './user_orders_page.dart';
 import '../cart_page.dart';
 import '../user_profile_page.dart';
+import '../auth/login_page.dart';
 
 class HomePage extends StatefulWidget {
-  const HomePage({super.key});
+  final bool isGuest;
+
+  const HomePage({
+    super.key,
+    this.isGuest = false,
+  });
 
   @override
   State<HomePage> createState() =>
@@ -21,6 +27,42 @@ class HomePage extends StatefulWidget {
 
 class _HomePageState
     extends State<HomePage> {
+
+      void showLoginRequired() {
+  showDialog(
+    context: context,
+    builder: (context) {
+      return AlertDialog(
+        title: const Text("Login Diperlukan"),
+        content: const Text(
+          "Silakan login terlebih dahulu untuk menggunakan fitur ini.",
+        ),
+        actions: [
+          TextButton(
+            onPressed: () {
+              Navigator.pop(context);
+            },
+            child: const Text("Batal"),
+          ),
+          ElevatedButton(
+            onPressed: () {
+              Navigator.pop(context);
+
+              Navigator.pushReplacement(
+                context,
+                MaterialPageRoute(
+                  builder: (_) => const LoginPage(),
+                ),
+              );
+            },
+            child: const Text("Login"),
+          ),
+        ],
+      );
+    },
+  );
+}
+
   final FirebaseService _service =
       FirebaseService();
 
@@ -118,6 +160,11 @@ class _HomePageState
                 },
 
                 onProfileUser: () {
+                  if (widget.isGuest) {
+                    showLoginRequired();
+                    return;
+                  }
+
                   Navigator.push(
                     context,
                     MaterialPageRoute(
@@ -128,6 +175,11 @@ class _HomePageState
                 },
 
                 onOrdersUser: () {
+                  if (widget.isGuest) {
+                    showLoginRequired();
+                    return;
+                  }
+
                   Navigator.push(
                     context,
                     MaterialPageRoute(

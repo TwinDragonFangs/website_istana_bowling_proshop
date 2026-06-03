@@ -354,6 +354,21 @@ class _LoginPageState extends State<LoginPage> {
 
               const SizedBox(height: 20),
 
+                ElevatedButton.icon(
+                  onPressed: () {
+                    Navigator.pushReplacement(
+                      context,
+                      MaterialPageRoute(
+                        builder: (_) => const HomePage(
+                          isGuest: true,
+                        ),
+                      ),
+                    );
+                  },
+                  icon: const Icon(Icons.person_outline),
+                  label: const Text("Masuk Sebagai Guest"),
+                ),
+
               TextButton(
                 onPressed: () {
                   Navigator.push(
