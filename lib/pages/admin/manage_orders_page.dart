@@ -674,6 +674,11 @@ class _ManageOrdersPageState extends State<ManageOrdersPage> {
     int preOrderDays =
         data['preOrderDays'] ?? 0;
 
+    final preOrderController =
+    TextEditingController(
+      text: preOrderDays.toString(),
+    );
+
     showDialog(
       context: context,
       builder: (_) {
@@ -753,6 +758,25 @@ class _ManageOrdersPageState extends State<ManageOrdersPage> {
                       ),
 
                       const SizedBox(height: 10),
+
+                      const SizedBox(height: 10),
+
+                        if (status == "Pre Order")
+                          TextField(
+                            controller: preOrderController,
+                            keyboardType: TextInputType.number,
+                            decoration: const InputDecoration(
+                              labelText: "Jumlah Hari Pre Order",
+                              border: OutlineInputBorder(),
+                              prefixIcon: Icon(Icons.schedule),
+                            ),
+                            onChanged: (value) {
+                              preOrderDays =
+                                  int.tryParse(value) ?? 0;
+                            },
+                          ),
+
+                        const SizedBox(height: 10),
 
                       const Divider(),
 
@@ -1008,9 +1032,12 @@ StreamBuilder<QuerySnapshot>(
                         status,
 
                     'preOrderDays':
-                        status == "Pre Order"
-                            ? preOrderDays
-                            : 0,
+                      status == "Pre Order"
+                          ? int.tryParse(
+                                preOrderController.text,
+                              ) ??
+                              0
+                          : 0,
 
                     'items':
                         cart,

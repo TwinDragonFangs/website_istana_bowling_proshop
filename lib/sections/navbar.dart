@@ -7,7 +7,7 @@ import '../providers/cart_provider.dart';
 
 class Navbar extends StatelessWidget {
   final Function(String) onCategorySelected;
-
+  final bool isGuest;
   final bool isAdmin;
 
   final VoidCallback? onAdd;
@@ -23,6 +23,7 @@ class Navbar extends StatelessWidget {
     super.key,
     required this.onCategorySelected,
     this.isAdmin = false,
+    this.isGuest = false,
     this.onAdd,
     this.onManage,
     this.onOrdersAdmin,
@@ -115,14 +116,37 @@ class Navbar extends StatelessWidget {
             const SizedBox(width: 10),
 
             // USER ORDERS BADGE
-            StreamBuilder<QuerySnapshot>(
-              stream: FirebaseFirestore.instance
-                  .collection('orders')
-                  .where('customerEmail',
-                      isEqualTo: user?.email)
-                  .snapshots(),
+            if (isGuest)
+              IconButton(
+                icon: const Icon(
+                  Icons.receipt_long,
+                  color: Colors.white,
+                ),
+                onPressed: onOrdersUser,
+              )
+            else
+              StreamBuilder<QuerySnapshot>(
+                stream: FirebaseFirestore.instance
+                    .collection('orders')
+                    .where(
+                      'customerEmail',
+                      isEqualTo: user?.email?.trim().toLowerCase(),
+                    )
+                    .snapshots(),
               builder: (context, snapshot) {
-                int count = snapshot.data?.docs.length ?? 0;
+                int count = 0;
+
+                  if (snapshot.hasData) {
+                    count = snapshot.data!.docs.where((doc) {
+                      final data = doc.data() as Map<String, dynamic>;
+
+                      final status =
+                          (data['status'] ?? '').toString();
+
+                      return status != 'Selesai' &&
+                          status != 'Dibatalkan';
+                    }).length;
+                  }
 
                 return Stack(
                   children: [

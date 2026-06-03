@@ -18,7 +18,7 @@ class Footer extends StatelessWidget {
 
   void _openLocation() async {
     final uri = Uri.parse(
-      "https://maps.app.goo.gl/6qmC621Yc3wYRyvQ8",
+      "https://maps.app.goo.gl/oBhoshiUho18kxHW8",
     );
     if (await canLaunchUrl(uri)) {
       await launchUrl(uri, mode: LaunchMode.externalApplication);

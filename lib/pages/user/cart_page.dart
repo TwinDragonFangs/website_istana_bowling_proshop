@@ -5,7 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:intl/intl.dart';
-import '../providers/cart_provider.dart';
+import '../../providers/cart_provider.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 class CartPage extends StatelessWidget {

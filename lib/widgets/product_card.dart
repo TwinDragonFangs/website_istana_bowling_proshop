@@ -1,22 +1,23 @@
 import 'dart:convert';
-
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:intl/intl.dart';
-
 import '../models/product.dart';
 import '../providers/cart_provider.dart';
-
+import '../pages/auth/login_page.dart';
 import '../pages/admin/admin_product_detail_page.dart';
+import '../pages/user/product_detail_page.dart';
 
 class ProductCard extends StatefulWidget {
   final Product product;
   final bool isAdmin;
+  final bool isGuest;
 
   const ProductCard({
     super.key,
     required this.product,
     this.isAdmin = false,
+    this.isGuest = false,
   });
 
   @override
@@ -24,6 +25,40 @@ class ProductCard extends StatefulWidget {
 }
 
 class _ProductCardState extends State<ProductCard> {
+  void showLoginRequired() {
+  showDialog(
+    context: context,
+    builder: (context) {
+      return AlertDialog(
+        title: const Text("Login Diperlukan"),
+        content: const Text(
+          "Silakan login terlebih dahulu untuk menambahkan produk ke keranjang.",
+        ),
+        actions: [
+          TextButton(
+            onPressed: () {
+              Navigator.pop(context);
+            },
+            child: const Text("Batal"),
+          ),
+          ElevatedButton(
+            onPressed: () {
+              Navigator.pop(context);
+
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (_) => const LoginPage(),
+                ),
+              );
+            },
+            child: const Text("Login"),
+          ),
+        ],
+      );
+    },
+  );
+}
   late String selectedVariant;
 
   int qty = 1;
@@ -116,15 +151,28 @@ class _ProductCardState extends State<ProductCard> {
       );
     }
 
-    // ==========================
-    // USER MODE
-    // ==========================
-    return Card(
-      elevation: 4,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(12),
+// ==========================
+// USER MODE
+// ==========================
+return InkWell(
+  borderRadius: BorderRadius.circular(12),
+  onTap: () {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => ProductDetailPage(
+          product: widget.product,
+          isGuest: widget.isGuest,
+        ),
       ),
-      child: Padding(
+    );
+  },
+  child: Card(
+    elevation: 4,
+    shape: RoundedRectangleBorder(
+      borderRadius: BorderRadius.circular(12),
+    ),
+    child: Padding(
         padding: const EdgeInsets.all(10),
         child: Column(
           children: [
@@ -158,88 +206,10 @@ class _ProductCardState extends State<ProductCard> {
                 fontWeight: FontWeight.bold,
               ),
             ),
-
-            const SizedBox(height: 10),
-
-            if (widget.product.variants.isNotEmpty)
-              DropdownButton<String>(
-                value: selectedVariant,
-                isExpanded: true,
-                items: widget.product.variants
-                    .map(
-                      (v) => DropdownMenuItem(
-                        value: v,
-                        child: Text(v),
-                      ),
-                    )
-                    .toList(),
-                onChanged: (value) {
-                  setState(() {
-                    selectedVariant = value!;
-                  });
-                },
-              ),
-
-            Row(
-              mainAxisAlignment:
-                  MainAxisAlignment.center,
-              children: [
-                IconButton(
-                  onPressed: () {
-                    if (qty > 1) {
-                      setState(() {
-                        qty--;
-                      });
-                    }
-                  },
-                  icon: const Icon(Icons.remove),
-                ),
-
-                Text(
-                  qty.toString(),
-                  style: const TextStyle(
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-
-                IconButton(
-                  onPressed: () {
-                    setState(() {
-                      qty++;
-                    });
-                  },
-                  icon: const Icon(Icons.add),
-                ),
-              ],
-            ),
-
-            SizedBox(
-              width: double.infinity,
-              child: ElevatedButton(
-                onPressed: () {
-                  cart.addToCart(
-                    widget.product,
-                    selectedVariant,
-                    qty,
-                  );
-
-                  ScaffoldMessenger.of(context)
-                      .showSnackBar(
-                    const SnackBar(
-                      content: Text(
-                        "Ditambahkan ke keranjang",
-                      ),
-                    ),
-                  );
-                },
-                child: const Text(
-                  "Tambah ke Keranjang",
-                ),
-              ),
-            ),
           ],
         ),
       ),
-    );
+    ),
+  );
   }
 }

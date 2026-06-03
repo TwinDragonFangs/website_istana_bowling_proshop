@@ -8,8 +8,8 @@ import '../../sections/banner_section.dart';
 import '../../sections/product_section.dart';
 import '../../sections/footer.dart';
 import './user_orders_page.dart';
-import '../cart_page.dart';
-import '../user_profile_page.dart';
+import 'cart_page.dart';
+import 'user_profile_page.dart';
 import '../auth/login_page.dart';
 
 class HomePage extends StatefulWidget {
@@ -150,6 +150,7 @@ class _HomePageState
             children: [
               Navbar(
                 isAdmin: false,
+                isGuest: widget.isGuest,
 
                 onCategorySelected:
                     (c) {
@@ -414,6 +415,7 @@ class _HomePageState
 
                         products:
                             products,
+                            isGuest: widget.isGuest,
                       ),
 
                       const Footer(),

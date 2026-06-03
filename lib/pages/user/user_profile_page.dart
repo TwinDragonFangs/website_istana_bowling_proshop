@@ -5,7 +5,7 @@ import 'dart:convert';
 import 'dart:io';
 import 'package:image_picker/image_picker.dart';
 import 'package:image/image.dart' as img;
-import './auth/login_page.dart';
+import '../auth/login_page.dart';
 
 class UserProfilePage extends StatefulWidget {
   const UserProfilePage({super.key});

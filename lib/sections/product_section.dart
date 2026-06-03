@@ -7,12 +7,14 @@ class ProductSection extends StatelessWidget {
   final String title;
   final List<Product> products;
   final bool isAdmin;
+  final bool isGuest;
 
   const ProductSection({
     super.key,
     required this.title,
     required this.products,
     this.isAdmin = false,
+    this.isGuest = false,
   });
 
   int _getCrossAxisCount(double width) {
@@ -73,6 +75,7 @@ class ProductSection extends StatelessWidget {
               return ProductCard(
                 product: products[index],
                 isAdmin: isAdmin,
+                isGuest: isGuest,
               );
             },
           ),
