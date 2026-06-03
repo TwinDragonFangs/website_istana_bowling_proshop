@@ -190,6 +190,11 @@ class _HomePageState
                 },
 
                 onCart: () {
+                  if (widget.isGuest) {
+                    showLoginRequired();
+                    return;
+                  }
+
                   Navigator.push(
                     context,
                     MaterialPageRoute(
