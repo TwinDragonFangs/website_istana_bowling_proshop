@@ -1,64 +1,41 @@
 import 'package:firebase_messaging/firebase_messaging.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:firebase_auth/firebase_auth.dart';
-
-import 'notification_helper.dart';
+import 'notification_service.dart';
+import 'deep_link_service.dart';
 
 class PushNotificationService {
-  final FirebaseMessaging _messaging =
+  static final FirebaseMessaging _messaging =
       FirebaseMessaging.instance;
 
-  Future<void> init() async {
+  static bool _initialized = false;
+
+  static Future<void> init() async {
+    if (_initialized) return;
+    _initialized = true;
 
     await _messaging.requestPermission();
 
-    String? token =
-        await _messaging.getToken();
+    // ================= FOREGROUND =================
+    FirebaseMessaging.onMessage.listen((message) {
+      final title = message.notification?.title ?? "Notifikasi";
+      final body = message.notification?.body ?? "";
 
-    print("FCM TOKEN: $token");
+      NotificationService.show(
+        title: title,
+        body: body,
+      );
+    });
 
-    if (token != null) {
-      final user =
-          FirebaseAuth.instance.currentUser;
+    // ================= CLICK NOTIFICATION =================
+    FirebaseMessaging.onMessageOpenedApp.listen((message) {
+      DeepLinkService.handle(message.data);
+    });
 
-      if (user != null) {
-        await FirebaseFirestore.instance
-            .collection('users')
-            .doc(user.uid)
-            .update({
-          'fcmToken': token,
-        });
-      }
+    // ================= KILLED STATE =================
+    final initialMessage =
+        await FirebaseMessaging.instance.getInitialMessage();
+
+    if (initialMessage != null) {
+      DeepLinkService.handle(initialMessage.data);
     }
-
-    // ===== FOREGROUND NOTIFICATION =====
-    FirebaseMessaging.onMessage.listen(
-      (RemoteMessage message) {
-
-        print(
-          "Foreground notification: "
-          "${message.notification?.title}",
-        );
-
-        NotificationHelper.showNotification(
-          title:
-              message.notification?.title ??
-              "Notifikasi",
-
-          body:
-              message.notification?.body ??
-              "",
-        );
-      },
-    );
-
-    // ===== SAAT NOTIF DITEKAN =====
-    FirebaseMessaging.onMessageOpenedApp.listen(
-      (RemoteMessage message) {
-        print(
-          "Notification clicked",
-        );
-      },
-    );
   }
 }

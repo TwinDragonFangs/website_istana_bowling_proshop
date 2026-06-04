@@ -7,6 +7,7 @@ import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:intl/intl.dart';
 import '../../providers/cart_provider.dart';
 import 'package:url_launcher/url_launcher.dart';
+import '../../services/order_notification_service.dart';
 
 class CartPage extends StatelessWidget {
   const CartPage({super.key});
@@ -221,9 +222,9 @@ class CartPage extends StatelessWidget {
                                 });
                               }
 
-                              await FirebaseFirestore.instance
-                                  .collection('orders')
-                                  .add({
+                              final docRef = await FirebaseFirestore.instance
+                                .collection('orders')
+                                .add({
                                 'customerName':
                                     userData['name'] ?? '',
                                 'customerEmail':
@@ -243,6 +244,11 @@ class CartPage extends StatelessWidget {
                                 'createdAt': FieldValue
                                     .serverTimestamp(),
                               });
+
+                              await OrderNotificationService.notifyAdminNewOrder(
+                                orderId: docRef.id,
+                                customerName: userData['name'],
+                              );
 
                               String message =
                                   "=== ORDER ISTANA BOWLING PROSHOP ===\n\n";

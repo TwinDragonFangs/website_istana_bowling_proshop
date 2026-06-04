@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import '../../models/product.dart';
+import '../../services/order_notification_service.dart';
 
 class ManageOrdersPage extends StatefulWidget {
   const ManageOrdersPage({super.key});
@@ -216,17 +217,20 @@ class _ManageOrdersPageState extends State<ManageOrdersPage> {
                                 );
                               }).toList(),
                               onChanged: locked
-                                  ? null
-                                  : (val) {
-                                      FirebaseFirestore
-                                          .instance
-                                          .collection(
-                                              'orders')
-                                          .doc(doc.id)
-                                          .update({
-                                        'status': val
-                                      });
-                                    },
+                                ? null
+                                : (val) async {
+
+                                    await FirebaseFirestore.instance
+                                        .collection('orders')
+                                        .doc(doc.id)
+                                        .update({'status': val});
+
+                                    await OrderNotificationService.notifyUserOrderStatus(
+                                      email: data['customerEmail'],
+                                      status: val!,
+                                      orderId: doc.id,
+                                    );
+                                  },
                             ),
                             const SizedBox(height: 10),
 

@@ -6,25 +6,8 @@ import 'pages/user/home_page.dart';
 import 'pages/admin/admin_dashboard.dart';
 import 'pages/auth/login_page.dart';
 
-import 'services/push_notification_service.dart';
-
-class AuthWrapper extends StatefulWidget {
+class AuthWrapper extends StatelessWidget {
   const AuthWrapper({super.key});
-
-  @override
-  State<AuthWrapper> createState() => _AuthWrapperState();
-}
-
-class _AuthWrapperState extends State<AuthWrapper> {
-
-  bool _fcmInitialized = false;
-
-  void _initFCMOnce() {
-    if (_fcmInitialized) return;
-
-    PushNotificationService().init();
-    _fcmInitialized = true;
-  }
 
   @override
   Widget build(BuildContext context) {
@@ -41,12 +24,12 @@ class _AuthWrapperState extends State<AuthWrapper> {
 
         final user = snapshot.data;
 
-        // ================= NOT LOGIN =================
+        // ================= NOT LOGGED IN =================
         if (user == null) {
           return const LoginPage();
         }
 
-        // ================= LOGIN + ROLE CHECK =================
+        // ================= ROLE CHECK =================
         return FutureBuilder<DocumentSnapshot>(
           future: FirebaseFirestore.instance
               .collection('users')
@@ -60,15 +43,10 @@ class _AuthWrapperState extends State<AuthWrapper> {
               );
             }
 
-            final data =
-                snap.data!.data() as Map<String, dynamic>?;
-
+            final data = snap.data!.data() as Map<String, dynamic>?;
             final role = data?['role'] ?? 'user';
 
-            // ================= INIT FCM ONCE =================
-            _initFCMOnce();
-
-            // ================= ROUTING =================
+            // ================= ROUTING ONLY =================
             if (role == 'admin') {
               return const AdminDashboard();
             }

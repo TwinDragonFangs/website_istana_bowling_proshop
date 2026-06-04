@@ -3,79 +3,81 @@ const admin = require("firebase-admin");
 
 admin.initializeApp();
 
-
-// =============================
-// 1. NOTIF KE ADMIN (ORDER BARU)
-// =============================
-exports.notifyAdminNewOrder = functions.firestore
+// ==========================
+// 1. ORDER CREATED → NOTIF ADMIN
+// ==========================
+exports.onOrderCreate = functions.firestore
   .document("orders/{orderId}")
-  .onCreate(async (snap) => {
-
+  .onCreate(async (snap, context) => {
     const order = snap.data();
 
-    const admins = await admin.firestore()
+    const adminUsers = await admin.firestore()
       .collection("users")
       .where("role", "==", "admin")
       .get();
 
-    const tokens = admins.docs
-      .map(d => d.data().fcmToken)
-      .filter(Boolean);
+    const tokens = [];
+
+    adminUsers.forEach(doc => {
+      const data = doc.data();
+      if (data.fcmToken) {
+        tokens.push(data.fcmToken);
+      }
+    });
 
     if (tokens.length === 0) return;
 
-    return admin.messaging().sendEachForMulticast({
-      tokens,
+    const message = {
       notification: {
-        title: "🛒 Order Baru Masuk",
-        body: `${order.customerName} melakukan pemesanan`,
+        title: "Pesanan Baru",
+        body: `${order.customerName} membuat pesanan baru`,
       },
-      webpush: {
-        notification: {
-          icon: "https://your-domain.com/logo-ibp.png",
-          requireInteraction: true
-        }
-      }
-    });
+      data: {
+        type: "order",
+        orderId: context.params.orderId,
+      },
+      tokens: tokens,
+    };
+
+    await admin.messaging().sendMulticast(message);
   });
 
 
-// =====================================
-// 2. NOTIF KE USER (STATUS BERUBAH)
-// =====================================
-exports.notifyUserStatusUpdate = functions.firestore
+// ==========================
+// 2. ORDER STATUS UPDATE → NOTIF USER
+// ==========================
+exports.onOrderUpdate = functions.firestore
   .document("orders/{orderId}")
-  .onUpdate(async (change) => {
+  .onUpdate(async (change, context) => {
 
     const before = change.before.data();
     const after = change.after.data();
 
-    // hanya jika status berubah
     if (before.status === after.status) return;
 
     const userSnap = await admin.firestore()
       .collection("users")
       .where("email", "==", after.customerEmail)
+      .limit(1)
       .get();
 
     if (userSnap.empty) return;
 
     const user = userSnap.docs[0].data();
-    const token = user.fcmToken;
 
-    if (!token) return;
+    if (!user.fcmToken) return;
 
-    return admin.messaging().send({
-      token,
+    const message = {
       notification: {
-        title: "📦 Status Pesanan Update",
-        body: `Status: ${after.status}`,
+        title: "Update Pesanan",
+        body: `Status pesanan Anda: ${after.status}`,
       },
-      webpush: {
-        notification: {
-          icon: "https://your-domain.com/logo-ibp.png",
-          requireInteraction: true
-        }
-      }
-    });
+      data: {
+        type: "order",
+        orderId: context.params.orderId,
+      },
+      token: user.fcmToken,
+    };
+
+    await admin.messaging().send(message);
   });
